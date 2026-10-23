@@ -144,7 +144,55 @@ h2 {
   right: 24px;
   bottom: 26px;
   display: flex;
+  align-items: center;
   gap: 7px;
+}
+#zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: 12px;
+  padding: 4px;
+  background: #050505dd;
+  color: #888;
+  font-size: 9px;
+}
+#zoom {
+  appearance: none;
+  width: 88px;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+#zoom::-webkit-slider-runnable-track {
+  height: 1px;
+  background: #555;
+}
+#zoom::-moz-range-track {
+  height: 1px;
+  background: #555;
+}
+#zoom::-webkit-slider-thumb {
+  appearance: none;
+  width: 5px;
+  height: 13px;
+  margin-top: -6px;
+  border: 0;
+  border-radius: 1px;
+  background: #bbb;
+}
+#zoom::-moz-range-thumb {
+  width: 5px;
+  height: 13px;
+  border: 0;
+  border-radius: 1px;
+  background: #bbb;
+}
+#zoom-value {
+  min-width: 27px;
+  text-align: right;
 }
 #actions button {
   font-size: 19px;
@@ -217,6 +265,12 @@ dialog input {
   #actions {
     right: 16px;
     bottom: 22px;
+  }
+  #zoom-control {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    margin: 0;
   }
   dialog {
     left: 16px;

@@ -45,6 +45,16 @@ export class Hud {
       camera.follow = camera.follow === id ? null : id;
       this.refresh();
     };
+    const zoom = $<HTMLInputElement>("#zoom");
+    zoom.oninput = () => {
+      camera.zoomAt(
+        Number(zoom.value) / camera.zoom,
+        camera.width / 2,
+        camera.height / 2,
+      );
+      this.refreshZoom();
+    };
+    zoom.onchange = () => this.save();
     document.querySelectorAll<HTMLButtonElement>("[data-speed]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -85,6 +95,17 @@ export class Hud {
       { signal: this.abort.signal },
     );
   }
+  private refreshZoom() {
+    const value = this.camera.zoom;
+    const text = value.toLocaleString("it-IT", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }) + "×";
+    const slider = this.$<HTMLInputElement>("#zoom");
+    slider.value = String(value);
+    slider.setAttribute("aria-valuetext", text);
+    this.$("#zoom-value").textContent = text;
+  }
   notice(text: string, persistent = false) {
     const output = this.$("#notice");
     output.textContent = text;
@@ -95,6 +116,7 @@ export class Hud {
       }, 6000);
   }
   refresh() {
+    this.refreshZoom();
     const $ = this.$,
       id = this.getSelected(),
       s = id ? this.world.souls.get(id) : null;

@@ -34,6 +34,19 @@
       <div id="person-body"></div>
     </aside>
     <nav id="actions" aria-label="Osservazione">
+      <label id="zoom-control">
+        <span>zoom</span>
+        <input
+          id="zoom"
+          type="range"
+          min="0.2"
+          max="4"
+          step="0.01"
+          value="1"
+          aria-label="Zoom della vista"
+        />
+        <output id="zoom-value" for="zoom">1×</output>
+      </label>
       <button
         id="birth"
         aria-label="Dai un nome a una nuova anima"
