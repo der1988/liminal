@@ -1,1 +1,68 @@
-<!doctype html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#deddd3"><title>Una forma di attesa</title></head><body><canvas aria-label="Spazio liminale: un abitante autonomo e un organismo che cresce. Muovi il cursore per attrarre, tieni premuto per respingere."></canvas><header><span>UNA FORMA DI ATTESA</span><span>STUDIO N° 01</span></header><footer><p>Muovi per avvicinare. Tieni premuto per lasciare spazio.</p><button id="pause" aria-label="Metti in pausa la simulazione">Pausa</button></footer><script type="module" src="/src/main.ts"></script></body></html>
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#101711" />
+    <meta
+      name="description"
+      content="Milano, una notte impossibile. Una passeggiata in prima persona tra nebbia, cortei e presenze oltre le guglie."
+    />
+    <title>OLTRE LE GUGLIE — Milano, 31 ottobre</title>
+  </head>
+  <body>
+    <canvas
+      id="world"
+      aria-label="Piazza del Duomo di notte, esplorabile in prima persona"
+    ></canvas>
+    <div class="film" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <header>
+      <span class="wordmark"
+        >OLTRE LE GUGLIE<span class="edition">
+          / UN NOTTURNO INTERATTIVO</span
+        ></span
+      ><button id="audio" aria-pressed="false">SUONO <span>OFF</span></button>
+    </header>
+    <section id="intro" aria-label="Ingresso nell’esperienza">
+      <div class="kicker">
+        <span class="signal"></span> MILANO · XXXI OTTOBRE · 23:47
+      </div>
+      <h1>La notte<br />non <em>finisce.</em></h1>
+      <p class="synopsis">
+        La piazza si muove. Qualcosa, oltre le guglie, respira.<br />Tu sei
+        soltanto di passaggio.
+      </p>
+      <button id="enter">ATTRAVERSA LA NEBBIA <span>↗</span></button>
+      <div class="controls">
+        <span><b>W A S D</b> cammina</span><span><b>MOUSE</b> guarda</span
+        ><span><b>ESC</b> fermati</span>
+      </div>
+      <p class="touch-note">
+        Trascina a sinistra per camminare, a destra per guardarti attorno.
+      </p>
+    </section>
+    <div id="ingame" hidden>
+      <div id="hint">Cammina. Osserva. Nessuno ti sta cercando.</div>
+      <button id="pause" aria-label="Metti in pausa">Ⅱ</button>
+      <div id="touch-controls">
+        <div id="joystick"><div id="stick"></div></div>
+        <span class="look-hint">GUARDA ↔</span>
+      </div>
+    </div>
+    <footer>
+      <span>45°27′51″ N &nbsp; 9°11′25″ E</span
+      ><span id="caption">UNA VISIONE DI FINZIONE · NESSUN OBIETTIVO</span
+      ><span>RESTARE A GUARDARE <i>○</i></span>
+    </footer>
+    <div id="error" role="alert" hidden>
+      Questa esperienza richiede WebGL. Attiva l’accelerazione grafica nel
+      browser e ricarica la pagina.
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
