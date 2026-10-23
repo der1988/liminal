@@ -7,7 +7,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "test:unit": "tsx --test tests/world.test.ts tests/births.test.ts tests/memory.test.ts tests/persistence.test.ts",
+    "test:generations": "tsx --test tests/generations.test.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

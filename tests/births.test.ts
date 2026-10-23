@@ -1,6 +1,78 @@
-import test from 'node:test';import assert from 'node:assert/strict';
-import { World } from '../src/model/world';import { birth,eligiblePairs,processBirths } from '../src/model/births';import { closeKin } from '../src/model/genealogy';
-test('initial families have exactly two valid, older parents and no ancestry cycles',()=>{const w=new World();const children=w.living.filter(s=>s.parents.length);assert.ok(children.length>5);for(const c of children){assert.equal(c.parents.length,2);for(const id of c.parents){const p=w.souls.get(id)!;assert.ok(p&&c.birthYear-p.birthYear>=20);assert.ok(!p.parents.some(id=>id===c.id));}assert.equal(closeKin(w.souls.get(c.parents[0])!,w.souls.get(c.parents[1])!,w.souls),false);}});
-test('named births choose an eligible couple, inherit bounded traits and record genealogy',()=>{const w=new World(8);const pairs=eligiblePairs(w);assert.ok(pairs.length);w.requestBirth('Luce');processBirths(w);assert.equal(w.pending.length,0);const c=w.souls.get(w.lastNamedBirth!.id)!;assert.equal(c.name,'Luce');assert.equal(c.named,true);assert.equal(c.birthYear,w.year);assert.equal(c.parents.length,2);assert.ok(c.traits.every(v=>v>=0&&v<=100));assert.equal(w.relationsOf(c.id).filter(r=>r.type==='family').length,2);assert.ok(c.parents.every(p=>w.childrenOf(p).some(s=>s.id===c.id)));assert.equal(closeKin(c,w.souls.get(c.parents[0])!,w.souls),true);});
-test('births without eligible parents remain cancellable and do not create a soul',()=>{const w=new World(9,0);w.createSoul(12);const request=w.requestBirth('Ada')!;processBirths(w);assert.equal(w.living.length,1);assert.equal(w.pending.length,1);w.cancelBirth(request.id);assert.equal(w.pending.length,0);});
-test('siblings and ancestors cannot become lovers or co-parents; cap and cooldown are enforced',()=>{const w=new World(8);const [a,b]=eligiblePairs(w)[0];const c=birth(w,a,b)!;assert.equal(birth(w,a,b),null);const before=w.relationships.length;assert.equal(w.createRelation(a,c,'love'),undefined);assert.equal(w.relationships.length,before);for(let i=w.living.length;i<120;i++)w.createSoul(30);assert.equal(eligiblePairs(w).length,0);});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { World } from "../src/model/world";
+import { birth, eligiblePairs, processBirths } from "../src/model/births";
+import { closeKin } from "../src/model/genealogy";
+test("initial families have exactly two valid, older parents and no ancestry cycles", () => {
+  const w = new World();
+  const children = w.living.filter((s) => s.parents.length);
+  assert.ok(children.length > 5);
+  for (const c of children) {
+    assert.equal(c.parents.length, 2);
+    for (const id of c.parents) {
+      const p = w.souls.get(id)!;
+      assert.ok(p && c.birthYear - p.birthYear >= 20);
+      assert.ok(!p.parents.some((id) => id === c.id));
+    }
+    assert.equal(
+      closeKin(w.souls.get(c.parents[0])!, w.souls.get(c.parents[1])!, w.souls),
+      false,
+    );
+  }
+});
+test("named births choose an eligible couple, inherit bounded traits and record genealogy", () => {
+  const w = new World(8);
+  const pairs = eligiblePairs(w);
+  assert.ok(pairs.length);
+  w.requestBirth("Luce");
+  processBirths(w);
+  assert.equal(w.pending.length, 0);
+  const c = w.souls.get(w.lastNamedBirth!.id)!;
+  assert.equal(c.name, "Luce");
+  assert.equal(c.named, true);
+  assert.equal(c.birthYear, w.year);
+  assert.equal(c.parents.length, 2);
+  assert.ok(c.traits.every((v) => v >= 0 && v <= 100));
+  assert.equal(
+    w.relationsOf(c.id).filter((r) => r.type === "family").length,
+    2,
+  );
+  assert.ok(c.parents.every((p) => w.childrenOf(p).some((s) => s.id === c.id)));
+  assert.equal(closeKin(c, w.souls.get(c.parents[0])!, w.souls), true);
+});
+test("births without eligible parents remain cancellable and do not create a soul", () => {
+  const w = new World(9, 0);
+  w.createSoul(12);
+  const request = w.requestBirth("Ada")!;
+  processBirths(w);
+  assert.equal(w.living.length, 1);
+  assert.equal(w.pending.length, 1);
+  w.cancelBirth(request.id);
+  assert.equal(w.pending.length, 0);
+});
+test("siblings and ancestors cannot become lovers or co-parents; cap and cooldown are enforced", () => {
+  const w = new World(8);
+  const [a, b] = eligiblePairs(w)[0];
+  const c = birth(w, a, b)!;
+  assert.equal(birth(w, a, b), null);
+  const before = w.relationships.length;
+  assert.equal(w.createRelation(a, c, "love"), undefined);
+  assert.equal(w.relationships.length, before);
+  for (let i = w.living.length; i < 120; i++) w.createSoul(30);
+  assert.equal(eligiblePairs(w).length, 0);
+});
+test("mutually attracted minors and adult siblings still cannot form a romantic pair", () => {
+  const w = new World(1, 0),
+    parents = [w.createSoul(60), w.createSoul(60)],
+    a = w.createSoul(25),
+    b = w.createSoul(25),
+    child = w.createSoul(12);
+  for (const s of [a, b, child]) {
+    s.traits = [50, 50, 50, 50, 50, 50];
+    s.preferences.ideals = [50, 50, 50, 50, 50, 50];
+  }
+  a.parents = [parents[0].id, parents[1].id];
+  b.parents = [parents[0].id, parents[1].id];
+  assert.equal(w.createRelation(a, b, "love", 0.8, 1), undefined);
+  assert.equal(w.createRelation(a, child, "love", 0.8, 1), undefined);
+});
