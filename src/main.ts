@@ -1,0 +1,13 @@
+import './style.css';
+import { Loop } from './engine/loop';
+import { Pointer } from './input/pointer';
+import { Renderer } from './renderer';
+import { Scene } from './scene';
+const canvas=document.querySelector('canvas')!;
+const renderer=new Renderer(canvas),pointer=new Pointer(canvas,renderer.toWorld),scene=new Scene();
+const loop=new Loop(dt=>scene.update(dt,pointer.state),alpha=>renderer.draw(scene,pointer.state,alpha));
+window.addEventListener('resize',()=>renderer.resize());
+const pause=document.querySelector<HTMLButtonElement>('#pause')!;
+pause.onclick=()=>{loop.paused=!loop.paused;pause.textContent=loop.paused?'Riprendi':'Pausa';pause.setAttribute('aria-label',loop.paused?'Riprendi la simulazione':'Metti in pausa la simulazione');};
+loop.start();
+if(import.meta.hot)import.meta.hot.dispose(()=>{loop.stop();pointer.dispose();});
