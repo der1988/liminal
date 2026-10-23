@@ -1,24 +1,33 @@
 import './style.css';
 import { Loop } from './engine/loop';
 import { World } from './model/world';
-import { Clock,type Speed } from './model/clock';
-import { ageOf,stageOf } from './model/types';
+import { Clock } from './model/clock';
 import { Camera } from './view/camera';
 import { ObserverInput } from './view/input';
 import { Renderer } from './renderer';
-import { echoesFor } from "./model/memory";
-const $=<T extends HTMLElement=HTMLElement>(s:string)=>document.querySelector<T>(s)!;
-const world=new World(),clock=new Clock(world),camera=new Camera(innerWidth,innerHeight),renderer=new Renderer($<HTMLCanvasElement>('#space'));
-let selected:string|null=null;let seenBirth:string|null=null;
-function select(id:string|null){selected=id;$('#person').hidden=!id;if(!id)camera.follow=null;refresh();}
-function refresh(){
- if(world.lastNamedBirth&&world.lastNamedBirth.id!==seenBirth){seenBirth=world.lastNamedBirth.id;const child=world.souls.get(seenBirth)!;selected=child.id;$('#person').hidden=false;camera.target={x:child.x,y:child.y};$('#notice').textContent=child.name;setTimeout(()=>$('#notice').textContent='',5000);}
- $('#pending').replaceChildren(...world.pending.map(r=>{const row=document.createElement('div');const text=document.createElement('span');text.textContent=r.name+' · in attesa di due genitori idonei';const cancel=document.createElement('button');cancel.textContent='×';cancel.setAttribute('aria-label','Annulla richiesta per '+r.name);cancel.onclick=()=>{world.cancelBirth(r.id);refresh();};row.append(text,cancel);return row;}));
- const s=selected?world.souls.get(selected):null;$('#year').textContent='anno '+Math.floor(world.year);if(s){$('#name').textContent=s.name;$('#age').textContent=s.deathYear===null?Math.floor(ageOf(s,world.year))+' anni · '+stageOf(ageOf(s,world.year)):'Scomparsa a '+Math.floor(ageOf(s,world.year))+' anni · '+s.birthYear.toFixed(1)+' — '+s.deathYear.toFixed(1);$('#follow').hidden=s.deathYear!==null;if(s.deathYear!==null&&camera.follow===s.id)camera.follow=null;$('#follow').textContent=camera.follow===s.id?'Smetti di seguire':'Segui';}}
-$('#close').onclick=()=>select(null);$('#follow').onclick=()=>{if(selected)camera.follow=camera.follow===selected?null:selected;refresh();};
-document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b=>b.onclick=()=>{clock.speed=Number(b.dataset.speed) as Speed;document.querySelectorAll('[data-speed]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
-const birthDialog=$<HTMLDialogElement>('#birth-dialog');$('#birth').onclick=()=>birthDialog.showModal();$('#cancel-name').onclick=()=>birthDialog.close();$('#birth-form').onsubmit=e=>{e.preventDefault();const name=$<HTMLInputElement>('#birth-name');if(world.requestBirth(name.value)){name.value='';birthDialog.close();refresh();}};
-const input=new ObserverInput($<HTMLCanvasElement>('#space'),world,camera,select,()=>echoesFor(world,selected).map(m=>m.person));
-const abort=new AbortController();window.addEventListener('resize',()=>{camera.width=innerWidth;camera.height=innerHeight;renderer.resize();},{signal:abort.signal});
-let uiTime=0;const loop=new Loop(dt=>{clock.advance(dt);if(camera.follow){const s=world.souls.get(camera.follow);if(s)camera.target={x:s.x,y:s.y};}camera.update(dt);uiTime+=dt;if(uiTime>.25){refresh();uiTime=0;}},()=>renderer.draw(world,camera,selected,clock.alpha));loop.start();
-if(import.meta.hot)import.meta.hot.dispose(()=>{loop.stop();input.dispose();abort.abort();});
+import { echoesFor } from './model/memory';
+import { Persistence,encode,type ObserverState } from './model/persistence';
+import { Hud } from './ui/hud';
+async function start(){
+ const persistence=new Persistence(),loaded=await persistence.load(),world=loaded.data?.world??new World(),clock=new Clock(world),camera=new Camera(innerWidth,innerHeight);
+ let selected=loaded.data?.observer.selected??null,seenBirth=world.lastNamedBirth?.id??null;
+ if(loaded.data){const saved=loaded.data.observer;clock.speed=saved.speed;clock.accumulator=saved.accumulator;Object.assign(camera,saved.camera);}else if(matchMedia('(prefers-reduced-motion: reduce)').matches)clock.speed=0;
+ const canvas=document.querySelector<HTMLCanvasElement>('#space')!,renderer=new Renderer(canvas);
+ const observer=():ObserverState=>({speed:clock.speed,accumulator:clock.accumulator,camera:{x:camera.x,y:camera.y,zoom:camera.zoom,follow:camera.follow},selected});
+ let saving=false;async function save(){if(saving)return;saving=true;try{await persistence.save(encode(world,observer()));}catch{hud.notice('Le modifiche restano in questa scheda: salvataggio locale non disponibile.',true);}finally{saving=false;}}
+ function select(id:string|null){selected=id;camera.follow=null;if(id){const s=world.souls.get(id);if(s)camera.target={x:s.x,y:s.y+(innerWidth<600?innerHeight*.22/camera.zoom:0)};}hud.refresh();}
+ const hud=new Hud(world,clock,camera,select,()=>selected,()=>{void save();});
+ if(loaded.warning)hud.notice(loaded.warning,true);
+ const input=new ObserverInput(canvas,world,camera,select,()=>echoesFor(world,selected).map(m=>m.person));
+ const abort=new AbortController();window.addEventListener('resize',()=>{camera.width=innerWidth;camera.height=innerHeight;renderer.resize();},{signal:abort.signal});
+ const journal=()=>{const envelope=encode(world,observer());if(!persistence.journal(envelope))void save();};window.addEventListener('pagehide',journal,{signal:abort.signal});document.addEventListener('visibilitychange',()=>{if(document.hidden)journal();},{signal:abort.signal});
+ let uiTime=0,saveTime=0;const loop=new Loop(dt=>{
+  clock.advance(dt);
+  if(world.lastNamedBirth&&world.lastNamedBirth.id!==seenBirth){seenBirth=world.lastNamedBirth.id;select(seenBirth);const s=world.souls.get(seenBirth)!;camera.target={x:s.x,y:s.y+(innerWidth<600?innerHeight*.22/camera.zoom:0)};hud.notice(s.name);void save();}
+  if(camera.follow){const s=world.souls.get(camera.follow);if(s&&s.deathYear===null)camera.target={x:s.x,y:s.y+(innerWidth<600?innerHeight*.22/camera.zoom:0)};else camera.follow=null;}camera.update(dt);
+  uiTime+=dt;saveTime+=dt;if(uiTime>.25){hud.refresh();uiTime=0;}if(saveTime>12){void save();saveTime=0;}
+ },()=>renderer.draw(world,camera,selected,clock.alpha));
+ loop.start();hud.refresh();
+ if(import.meta.hot)import.meta.hot.dispose(()=>{journal();loop.stop();input.dispose();hud.dispose();abort.abort();persistence.close();});
+}
+void start().catch(error=>{console.error(error);const notice=document.querySelector('#notice');if(notice)notice.textContent='L’universo non è disponibile. Ricarica la pagina per riprovare.';});

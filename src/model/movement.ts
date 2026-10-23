@@ -12,8 +12,8 @@ export function movement(w:MovementWorld,dt:number){
   if(w.seconds>=s.nextDecision){
    s.nextDecision=w.seconds+w.rng.between(2,6);
    if(w.seconds>s.stateUntil){s.state='exploration';s.target=null;}
-   if(s.state==='exploration'&&near.length&&w.rng.next()<.12+s.traits[3]/180){const weights=near.map(p=>attention(s,p)),sum=weights.reduce((a,b)=>a+b,0);let roll=w.rng.next()*sum;const candidate=near.find((_,i)=>(roll-=weights[i])<=0)??near[0];s.target=candidate.id;s.state='curiosity';s.stateUntil=w.seconds+w.rng.between(8,18);}
-   if(s.state==='exploration'){const links=w.relationsOf(s.id).filter(r=>r.end===null&&w.souls.get(r.a===s.id?r.b:r.a)?.deathYear===null);if(links.length&&w.rng.next()<.18){const r=w.rng.pick(links);s.target=r.a===s.id?r.b:r.a;s.state='accompaniment';s.stateUntil=w.seconds+w.rng.between(9,20);}}
+   if(s.state==='exploration'&&near.length&&w.rng.next()<.12+s.traits[3]/180){const weights=near.map(p=>attention(s,p)*((!w.relationsOf(s.id).some(r=>r.type==='love')&&!w.relationsOf(p.id).some(r=>r.type==='love')&&ageOf(s,w.year)>=20&&ageOf(p,w.year)>=20)?1.6:1)),sum=weights.reduce((a,b)=>a+b,0);let roll=w.rng.next()*sum;const candidate=near.find((_,i)=>(roll-=weights[i])<=0)??near[0];s.target=candidate.id;s.state='curiosity';s.stateUntil=w.seconds+w.rng.between(14,30);}
+   if(s.state==='exploration'){const links=w.relationsOf(s.id).filter(r=>r.end===null&&w.souls.get(r.a===s.id?r.b:r.a)?.deathYear===null);if(links.length&&w.rng.next()<.3-s.traits[5]*.0013){const r=w.rng.pick(links);s.target=r.a===s.id?r.b:r.a;s.state='accompaniment';s.stateUntil=w.seconds+w.rng.between(18,38);}}
   }
   const phase=w.seconds*.13+s.phase;let angle=s.heading+Math.sin(phase)*.045+Math.sin(phase*.37)*.022;
   let dx=Math.cos(angle)*speed,dy=Math.sin(angle)*speed;
@@ -21,7 +21,7 @@ export function movement(w:MovementWorld,dt:number){
   if(target&&target.deathYear===null){const tx=target.x-s.x,ty=target.y-s.y,d=Math.hypot(tx,ty)||1;
    if(s.state==='curiosity'){dx=dx*.45+tx/d*speed*.6;dy=dy*.45+ty/d*speed*.6;if(d<22){s.state='encounter';s.stateUntil=w.seconds+w.rng.between(7,16);}}
    if(s.state==='encounter'){dx*=.12;dy*=.12;if(d<12){dx-=tx/d*speed*.3;dy-=ty/d*speed*.3;}if(w.seconds>s.stateUntil){s.state='departure';s.stateUntil=w.seconds+7;}}
-   if(s.state==='accompaniment'){dx=dx*.55+target.vx*.25+tx/d*Math.min(d*.025,2);dy=dy*.55+target.vy*.25+ty/d*Math.min(d*.025,2);}
+   if(s.state==='accompaniment'){dx=dx*.55+target.vx*.25+tx/d*Math.min(d*.04,4);dy=dy*.55+target.vy*.25+ty/d*Math.min(d*.04,4);}
    if(s.state==='departure'){dx-=tx/d*speed*.3;dy-=ty/d*speed*.3;}
   }else if(s.target){s.target=null;s.state='departure';s.stateUntil=w.seconds+5;}
   // Children remain loosely near their living parents, without being locked to them.

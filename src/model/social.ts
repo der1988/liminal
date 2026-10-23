@@ -6,10 +6,11 @@ export const RELATION_COLORS={friendship:'#8BAED0',love:'#D59AA5',family:'#C4B28
 export const RELATION_LABELS={friendship:'Amicizia',love:'Amore',family:'Famiglia'};
 export function mutualLove(w:World,a:Soul,b:Soul,familiarity:number){return canLove(w,a,b)&&attraction(a,b,familiarity)>.53&&attraction(b,a,familiarity)>.53;}
 export function social(w:World){
- for(const a of w.living)for(const b of w.spatial.near(a,32)){
+ for(const a of w.living)for(const b of w.spatial.near(a,44)){
   if(a.id>=b.id)continue;
   const key=a.id+'|'+b.id;
-  let e=w.encounters.get(key);if(!e){e={a:a.id,b:b.id,familiarity:0,meetings:0,duration:0,lastSeen:-100,lastVisit:-100};w.encounters.set(key,e);}
+  const known=w.relationsOf(a.id).find(r=>r.a===b.id||r.b===b.id);
+  let e=w.encounters.get(key);if(!e){e={a:a.id,b:b.id,familiarity:known?.familiarity??0,meetings:known?.meetings??0,duration:(known?.sharedYears??0)*22.5,lastSeen:-100,lastVisit:-100};w.encounters.set(key,e);}
   if(w.seconds-e.lastSeen>2&&w.seconds-e.lastVisit>6){e.meetings++;e.lastVisit=w.seconds;}
   e.lastSeen=w.seconds;e.duration+=.5;e.familiarity=Math.min(1,e.familiarity+.012*(.5+(a.traits[3]+b.traits[3])/200));
   const existing=w.relationsOf(a.id).find(r=>r.a===b.id||r.b===b.id);
@@ -17,7 +18,7 @@ export function social(w:World){
   if(e.meetings<2||e.familiarity<.24)continue;
   const fit=(attraction(a,b,e.familiarity)+attraction(b,a,e.familiarity))/2;
   if(!existing&&fit>.48&&w.rng.next()<.035*(.5+(a.traits[3]+b.traits[3])/200))w.createRelation(a,b,'friendship',.35+fit*.25,e.familiarity,e.meetings,e.duration/22.5);
-  else if(existing?.type==='friendship'&&existing.intensity>.5&&e.meetings>=3&&e.duration>35&&mutualLove(w,a,b,e.familiarity)&&w.rng.next()<.024){w.endRelation(existing);w.createRelation(a,b,'love',.65,e.familiarity,e.meetings,e.duration/22.5);}
+  else if(existing?.type==='friendship'&&existing.intensity>.42&&e.meetings>=2&&e.duration>18&&mutualLove(w,a,b,e.familiarity)&&w.rng.next()<.055){w.endRelation(existing);w.createRelation(a,b,'love',.65,e.familiarity,e.meetings,e.duration/22.5);}
  }
  // Encounter working memory is bounded; completed relationships retain their own history.
  if(w.tick%675===0)for(const [key,e]of w.encounters)if(w.seconds-e.lastSeen>180||!w.souls.get(e.a)||!w.souls.get(e.b))w.encounters.delete(key);
