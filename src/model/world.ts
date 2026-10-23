@@ -6,8 +6,11 @@ import { CONFIG, type Soul, type Relationship, type LifeEvent, type Encounter, t
 import { social,maintainRelations,seedSocial,mutualLove } from "./social";
 import type { EventKind, RelationshipType } from "./types";
 import { seedFamilies,processBirths } from "./births";
+import { lifecycle } from "./lifecycle";
+import { memories,sediment } from "./memory";
 export class World {
  readonly souls=new Map<string,Soul>();living:Soul[]=[];relationships:Relationship[]=[];events:LifeEvent[]=[];
+ fading:string[]=[];
  encounters=new Map<string,Encounter>();sediments:Sediment[]=[];pending:BirthRequest[]=[];
  rng:Random;spatial=new Spatial();tick=0;nextSoul=1;nextEvent=1;nextRelation=1;nextRequest=1;
  relationIndex=new Map<string,Relationship[]>();
@@ -27,9 +30,9 @@ export class World {
   if(a.id===b.id||a.deathYear!==null||b.deathYear!==null||this.relationsOf(a.id).some(r=>r.type===type&&(r.a===b.id||r.b===b.id)))return undefined;
   const r:Relationship={id:'r'+this.nextRelation++,a:a.id,b:b.id,type,start,end:null,intensity,familiarity,meetings,sharedYears,lastMeeting:this.year};this.relationships.push(r);
   for(const id of [a.id,b.id]){const list=this.relationIndex.get(id)??[];list.push(r);this.relationIndex.set(id,list);}
-  if(type!=='family')this.record(type,[a.id,b.id],start);return r;
+  if(type!=='family'){this.record(type,[a.id,b.id],start);sediment(this,(a.x+b.x)/2,(a.y+b.y)/2,.08);}return r;
  }
  endRelation(r:Relationship){if(r.type==='family'||r.end!==null)return;r.end=this.year;this.record(r.type==='love'?'separation':'friendshipEnd',[r.a,r.b]);}
 
- step(){this.tick++;movement(this,CONFIG.step);if(this.tick%15===0){social(this);if(this.pending.length)processBirths(this);}if(this.tick%169===0){maintainRelations(this,169/675);processBirths(this,true);}}
+ step(){this.tick++;movement(this,CONFIG.step);if(this.tick%15===0){social(this);if(this.pending.length)processBirths(this);}if(this.tick%169===0){lifecycle(this);maintainRelations(this,169/675);memories(this,169/675);processBirths(this,true);}}
 }
