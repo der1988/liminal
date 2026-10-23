@@ -1,5 +1,35 @@
 import * as THREE from "three";
 import { random } from "../simulation/math";
+function surface(kind: "stone" | "wet" | "skin") {
+  const c = document.createElement("canvas");
+  c.width = c.height = 512;
+  const x = c.getContext("2d")!,
+    r = random(kind === "skin" ? 56 : 92),
+    image = x.createImageData(512, 512);
+  for (let y = 0; y < 512; y++)
+    for (let xx = 0; xx < 512; xx++) {
+      const i = (y * 512 + xx) * 4,
+        grain = r(),
+        wave =
+          Math.sin(xx * 0.047 + Math.sin(y * 0.025) * 4) +
+          Math.sin(y * 0.083 + xx * 0.011);
+      const v =
+        kind === "stone"
+          ? 150 + wave * 7 + grain * 18
+          : kind === "wet"
+            ? 65 + (Math.sin(xx * 0.019 + y * 0.027) + 1) * 40 + grain * 20
+            : 120 + wave * 29 + grain * 30;
+      image.data[i] = v;
+      image.data[i + 1] = v;
+      image.data[i + 2] = v;
+      image.data[i + 3] = 255;
+    }
+  x.putImageData(image, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(kind === "wet" ? 18 : 3, kind === "wet" ? 18 : 3);
+  return t;
+}
 export function makeMaterials() {
   const rng = random(371);
   const canvas = document.createElement("canvas");
@@ -24,10 +54,16 @@ export function makeMaterials() {
   pavement.wrapS = pavement.wrapT = THREE.RepeatWrapping;
   pavement.repeat.set(16, 16);
   pavement.colorSpace = THREE.SRGBColorSpace;
+  const marble = surface("stone"),
+    wet = surface("wet"),
+    skinRelief = surface("skin");
   return {
     stone: new THREE.MeshStandardMaterial({
-      color: "#7e8878",
-      roughness: 0.95,
+      color: "#939087",
+      map: marble,
+      bumpMap: marble,
+      bumpScale: 0.055,
+      roughness: 0.82,
     }),
     trim: new THREE.MeshStandardMaterial({ color: "#9a9e88", roughness: 0.85 }),
     dark: new THREE.MeshStandardMaterial({ color: "#111d18", roughness: 1 }),
@@ -39,9 +75,12 @@ export function makeMaterials() {
     }),
     ground: new THREE.MeshStandardMaterial({
       map: pavement,
-      color: "#a2a99a",
-      roughness: 0.39,
-      metalness: 0.15,
+      color: "#78827b",
+      roughness: 0.3,
+      roughnessMap: wet,
+      bumpMap: pavement,
+      bumpScale: 0.026,
+      metalness: 0.22,
     }),
     building: new THREE.MeshStandardMaterial({
       color: "#4b5749",
@@ -72,9 +111,11 @@ export function makeMaterials() {
     }),
     skin: new THREE.MeshStandardMaterial({ color: "#7a8070", roughness: 1 }),
     monster: new THREE.MeshStandardMaterial({
-      color: "#131f19",
-      roughness: 0.7,
-      metalness: 0.12,
+      color: "#25332c",
+      roughness: 0.37,
+      bumpMap: skinRelief,
+      bumpScale: 0.18,
+      metalness: 0.18,
     }),
     amber: new THREE.MeshBasicMaterial({ color: "#ffcf8b" }),
     flare: new THREE.MeshBasicMaterial({ color: "#ff6340" }),

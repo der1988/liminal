@@ -1,8 +1,14 @@
+import { attackAt, unrestAt } from "../simulation/events";
 /** Optional procedural ambience; no downloads, speech or autoplay. */
 export class Ambience {
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   enabled = false;
+  private roar: GainNode | null = null;
+  private rumble: OscillatorNode | null = null;
+  private voices: GainNode | null = null;
+  private noise: AudioBuffer | null = null;
+  private lastImpact = -1;
   async toggle() {
     if (!this.context) this.create();
     const next = !this.enabled;
@@ -23,6 +29,48 @@ export class Ambience {
         0.6,
       );
   }
+  update(time: number) {
+    if (!this.context || !this.enabled || !this.roar || !this.rumble) return;
+    const a = this.context,
+      attack = attackAt(time, 0),
+      unrest = unrestAt(time);
+    this.roar.gain.setTargetAtTime(
+      0.012 + attack.windup * 0.035 + attack.strike * 0.24,
+      a.currentTime,
+      0.1,
+    );
+    this.rumble.frequency.setTargetAtTime(
+      38 + attack.windup * 12 + attack.strike * 25,
+      a.currentTime,
+      0.08,
+    );
+    this.voices?.gain.setTargetAtTime(
+      0.012 + unrest.pressure * 0.025,
+      a.currentTime,
+      0.2,
+    );
+    const beat = Math.floor(time * 3.5);
+    if (unrest.charge > 0.25 && beat !== this.lastImpact && this.noise) {
+      this.lastImpact = beat;
+      const source = a.createBufferSource();
+      source.buffer = this.noise;
+      const filter = a.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 380;
+      const gain = a.createGain();
+      gain.gain.setValueAtTime(0.4, a.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.19);
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.master!);
+      source.start(0, 0, 0.21);
+      source.onended = () => {
+        source.disconnect();
+        filter.disconnect();
+        gain.disconnect();
+      };
+    }
+  }
   private create() {
     const a = new AudioContext();
     this.context = a;
@@ -37,6 +85,7 @@ export class Ambience {
       last = (last + Math.random() * 0.04 - 0.02) / 1.02;
       data[i] = last * 3.5;
     }
+    this.noise = noise;
     const source = a.createBufferSource();
     source.buffer = noise;
     source.loop = true;
@@ -68,6 +117,35 @@ export class Ambience {
     sirenGain.connect(master);
     siren.start();
     modulation.start();
+    const growl = a.createOscillator();
+    growl.type = "sawtooth";
+    growl.frequency.value = 38;
+    this.rumble = growl;
+    const throat = a.createBiquadFilter();
+    throat.type = "lowpass";
+    throat.frequency.value = 155;
+    throat.Q.value = 3;
+    const roar = a.createGain();
+    roar.gain.value = 0.012;
+    this.roar = roar;
+    growl.connect(throat);
+    throat.connect(roar);
+    roar.connect(master);
+    growl.start();
+    const crowd = a.createBufferSource();
+    crowd.buffer = noise;
+    crowd.loop = true;
+    crowd.playbackRate.value = 1.8;
+    const vocal = a.createBiquadFilter();
+    vocal.type = "bandpass";
+    vocal.frequency.value = 780;
+    vocal.Q.value = 1.3;
+    this.voices = a.createGain();
+    this.voices.gain.value = 0.02;
+    crowd.connect(vocal);
+    vocal.connect(this.voices);
+    this.voices.connect(master);
+    crowd.start();
   }
   dispose() {
     void this.context?.close();

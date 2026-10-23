@@ -5,13 +5,29 @@ function cloudTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 128;
   const ctx = c.getContext("2d")!;
-  const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  grad.addColorStop(0, "rgba(255,255,255,.4)");
-  grad.addColorStop(0.3, "rgba(255,255,255,.27)");
-  grad.addColorStop(0.65, "rgba(255,255,255,.08)");
-  grad.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 128, 128);
+  const r = random(551),
+    image = ctx.createImageData(128, 128);
+  const grid = Array.from({ length: 17 * 17 }, () => r());
+  for (let y = 0; y < 128; y++)
+    for (let x = 0; x < 128; x++) {
+      const gx = x / 8,
+        gy = y / 8,
+        ix = Math.floor(gx),
+        iy = Math.floor(gy),
+        fx = gx - ix,
+        fy = gy - iy;
+      const n =
+        (grid[iy * 17 + ix] * (1 - fx) + grid[iy * 17 + ix + 1] * fx) *
+          (1 - fy) +
+        (grid[(iy + 1) * 17 + ix] * (1 - fx) +
+          grid[(iy + 1) * 17 + ix + 1] * fx) *
+          fy;
+      const radial = Math.max(0, 1 - Math.hypot((x - 64) / 64, (y - 64) / 64));
+      const i = (y * 128 + x) * 4;
+      image.data[i] = image.data[i + 1] = image.data[i + 2] = 255;
+      image.data[i + 3] = Math.pow(radial, 1.3) * (0.12 + n * 0.55) * 255;
+    }
+  ctx.putImageData(image, 0, 0);
   return new THREE.CanvasTexture(c);
 }
 export class Atmosphere {
@@ -33,23 +49,23 @@ export class Atmosphere {
     flares: { position: THREE.Vector3; phase: number }[],
   ) {
     const map = cloudTexture();
-    for (let i = 0; i < 42; i++) {
-      const red = i < 14;
+    for (let i = 0; i < 82; i++) {
+      const red = i < 26;
       const x = red
           ? (i % 2 ? -12 : 13) + (this.rng() - 0.5) * 9
           : (this.rng() - 0.5) * 90,
         z = red ? -10 + (this.rng() - 0.5) * 20 : -45 + this.rng() * 80,
-        y = 1 + this.rng() * 9;
+        y = i % 4 === 0 ? 7 + this.rng() * 7 : 0.6 + this.rng() * 4;
       const mat = new THREE.SpriteMaterial({
         map,
         color: red ? "#ca7850" : "#a6b29a",
         transparent: true,
-        opacity: red ? 0.36 : 0.19,
+        opacity: red ? 0.45 : 0.3,
         depthWrite: false,
       });
       const sprite = new THREE.Sprite(mat);
       sprite.position.set(x, y, z);
-      sprite.scale.set(13 + this.rng() * 12, 6 + this.rng() * 9, 1);
+      sprite.scale.set(19 + this.rng() * 15, 5 + this.rng() * 9, 1);
       scene.add(sprite);
       this.smoke.push({ sprite, x, y, z, phase: this.rng() * 6, red });
     }

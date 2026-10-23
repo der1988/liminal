@@ -6,17 +6,20 @@ import { mergeStatic } from "./world/merge";
 import { Crowd } from "./world/crowd";
 import { Entities } from "./world/entities";
 import { Atmosphere } from "./effects/atmosphere";
+import { architecturalDetail } from "./world/detail";
+import { Clashes } from "./effects/clashes";
 export class World {
   readonly scene = new THREE.Scene();
   private crowd: Crowd;
   private entities: Entities;
   private atmosphere: Atmosphere;
   private blue: THREE.PointLight;
+  private clashes: Clashes;
   time = 0;
   constructor() {
     const s = this.scene;
     s.background = new THREE.Color("#202b24");
-    s.fog = new THREE.FogExp2("#202b24", 0.0115);
+    s.fog = new THREE.FogExp2("#202b24", 0.0135);
     s.add(new THREE.HemisphereLight("#98a08b", "#29362c", 1.0));
     const moon = new THREE.DirectionalLight("#829887", 0.55);
     moon.position.set(-20, 45, 10);
@@ -24,6 +27,7 @@ export class World {
     const m = makeMaterials();
     cathedral(s, m);
     const lamps = city(s, m);
+    architecturalDetail(s, m);
     mergeStatic(s);
     // Oblique facade lighting reveals details without turning night into daylight.
     const facade = new THREE.SpotLight(
@@ -46,12 +50,14 @@ export class World {
     this.crowd = new Crowd(s, m);
     this.entities = new Entities(s, m);
     this.atmosphere = new Atmosphere(s, lamps, this.crowd.flares);
+    this.clashes = new Clashes(s, m);
   }
   update(dt: number) {
     this.time += dt;
-    this.crowd.update(this.time);
     this.entities.update(this.time);
+    this.crowd.update(this.time, this.entities.threats);
     this.atmosphere.update(this.time, dt);
+    this.clashes.update(this.time);
     this.blue.intensity =
       8 + Math.pow(Math.max(0, Math.sin(this.time * 7)), 5) * 48;
   }

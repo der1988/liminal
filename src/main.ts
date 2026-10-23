@@ -5,6 +5,7 @@ import { World } from "./scene";
 import { Controller } from "./player/controller";
 import { Post } from "./effects/post";
 import { Ambience } from "./effects/audio";
+import { nightEnvironment } from "./effects/environment";
 const canvas = document.querySelector<HTMLCanvasElement>("#world")!;
 function start() {
   let renderer: THREE.WebGLRenderer;
@@ -34,6 +35,9 @@ function start() {
       220,
     ),
     world = new World();
+  const environment = nightEnvironment(renderer);
+  world.scene.environment = environment.texture;
+  world.scene.environmentIntensity = 0.32;
   const post = new Post(renderer, world.scene, camera),
     audio = new Ambience();
   const intro = document.querySelector<HTMLElement>("#intro")!,
@@ -45,6 +49,7 @@ function start() {
     (dt) => {
       controller.update(dt);
       world.update(dt);
+      audio.update(world.time);
     },
     (alpha) => {
       controller.render(alpha, world.time, !controller.active);
@@ -113,6 +118,7 @@ function start() {
         }
       });
       post.composer.dispose();
+      environment.dispose();
       renderer.dispose();
     });
 }

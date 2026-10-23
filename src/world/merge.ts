@@ -3,6 +3,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 /** Bake static architecture per material, keeping city draw calls bounded. */
 export function mergeStatic(root: THREE.Object3D) {
   root.updateWorldMatrix(true, true);
+  const inverseRoot = new THREE.Matrix4().copy(root.matrixWorld).invert();
   const groups = new Map<
     THREE.Material,
     { geometries: THREE.BufferGeometry[]; meshes: THREE.Mesh[] }
@@ -18,7 +19,9 @@ export function mergeStatic(root: THREE.Object3D) {
     const g = mesh.geometry.index
       ? mesh.geometry.toNonIndexed()
       : mesh.geometry.clone();
-    g.applyMatrix4(mesh.matrixWorld);
+    g.applyMatrix4(
+      new THREE.Matrix4().multiplyMatrices(inverseRoot, mesh.matrixWorld),
+    );
     const entry = groups.get(mesh.material as THREE.Material) ?? {
       geometries: [],
       meshes: [],
