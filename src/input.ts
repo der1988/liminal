@@ -1,7 +1,9 @@
 import type { ParticleSystem } from "./simulation/particles";
+import type { RelationshipType } from "./simulation/relationships";
 export type Tool = "connect" | "move" | "add" | "erase";
 export class Input {
   tool: Tool = "connect";
+  relationship: RelationshipType = "love";
   edgeRadius = 8;
   private radius = 14;
   hover: number | null = null;
@@ -78,7 +80,7 @@ export class Input {
           p &&
           p.id !== system.selected
         ) {
-          system.connect(system.selected, p.id);
+          system.connect(system.selected, p.id, this.relationship);
           system.selected = null;
         }
         if (

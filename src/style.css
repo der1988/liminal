@@ -516,3 +516,102 @@ noscript {
     transition: none;
   }
 }
+/* Relationship choices stay directly beside the drawing tools, including on touch. */
+.tool-dock {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+.tool-dock .toolbar {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  transform: none;
+}
+.relationship-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid #282828;
+  border-radius: 9px;
+  background: #101010;
+  box-shadow: 0 8px 28px #0005;
+  white-space: nowrap;
+}
+.relationship-picker button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: none;
+  padding: 10px 12px;
+  color: #969696;
+  font-size: 10px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.relationship-picker button:hover {
+  background: #1a1a1a;
+  color: #eee;
+}
+.relationship-picker button.active {
+  background: #202020;
+  border-color: var(--bond-color);
+  color: #eee;
+}
+.relationship-picker i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: var(--bond-color);
+  flex-shrink: 0;
+}
+.relationship-picker small {
+  font-size: 9px;
+  color: #888;
+  margin-left: -4px;
+}
+#selection-hint {
+  bottom: 158px;
+}
+@media (max-width: 1100px) {
+  .tool-dock {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+}
+@media (max-width: 700px) {
+  .tool-dock {
+    right: 50%;
+    transform: translateX(50%);
+    gap: 9px;
+  }
+  .relationship-picker button {
+    padding: 10px 9px;
+    font-size: 9px;
+    gap: 6px;
+  }
+  .relationship-picker small {
+    font-size: 8px;
+  }
+  .relationship-picker {
+    gap: 2px;
+  }
+  .experiment {
+    bottom: 139px;
+  }
+  #selection-hint {
+    bottom: 193px;
+  }
+}

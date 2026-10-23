@@ -1,5 +1,6 @@
 import type { ParticleSystem } from "./simulation/particles";
 import type { Input } from "./input";
+import { RELATIONSHIPS, RELATIONSHIP_TYPES } from "./simulation/relationships";
 export class Renderer {
   private context: CanvasRenderingContext2D;
   private dpr = 1;
@@ -28,24 +29,31 @@ export class Renderer {
         },
       ]),
     );
-    c.lineWidth = 0.7;
-    c.strokeStyle = "#ffffff59";
-    c.beginPath();
-    for (const edge of system.links) {
-      const a = positions.get(edge.a),
-        b = positions.get(edge.b);
-      if (!a || !b) continue;
-      c.moveTo(a.x, a.y);
-      c.lineTo(b.x, b.y);
+    c.lineWidth = 1;
+    for (const type of RELATIONSHIP_TYPES) {
+      c.strokeStyle = RELATIONSHIPS[type].color + "bf";
+      c.beginPath();
+      for (const edge of system.links) {
+        if (edge.type !== type) continue;
+        const a = positions.get(edge.a),
+          b = positions.get(edge.b);
+        if (!a || !b) continue;
+        c.moveTo(a.x, a.y);
+        c.lineTo(b.x, b.y);
+      }
+      c.stroke();
     }
-    c.stroke();
     if (input.tool === "erase" && input.pointer.active) {
-      const index = system.nearestLink(input.pointer.x, input.pointer.y, input.edgeRadius);
+      const index = system.nearestLink(
+        input.pointer.x,
+        input.pointer.y,
+        input.edgeRadius,
+      );
       if (index >= 0) {
         const e = system.links[index],
           a = positions.get(e.a)!,
           b = positions.get(e.b)!;
-        c.strokeStyle = "#ffffff";
+        c.strokeStyle = RELATIONSHIPS[e.type].color;
         c.lineWidth = 1.2;
         c.beginPath();
         c.moveTo(a.x, a.y);
@@ -69,14 +77,19 @@ export class Renderer {
       if (input.pointer.active) {
         c.setLineDash([3, 6]);
         c.lineWidth = 0.7;
-        c.strokeStyle = "#ffffff50";
+        c.strokeStyle = RELATIONSHIPS[input.relationship].color + "99";
         c.beginPath();
         c.moveTo(selected.x, selected.y);
         c.lineTo(input.pointer.x, input.pointer.y);
         c.stroke();
         c.setLineDash([]);
       }
-      this.mark(selected.x, selected.y, 8, "#ededed");
+      this.mark(
+        selected.x,
+        selected.y,
+        8,
+        RELATIONSHIPS[input.relationship].color,
+      );
     }
     if (input.hover !== null && input.hover !== system.selected) {
       const p = positions.get(input.hover);

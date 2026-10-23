@@ -1,4 +1,5 @@
 import { clamp, random } from "./math";
+import type { RelationshipType } from "./relationships";
 export interface Particle {
   id: number;
   x: number;
@@ -13,6 +14,7 @@ export interface Particle {
 export interface Link {
   a: number;
   b: number;
+  type: RelationshipType;
 }
 export class ParticleSystem {
   readonly particles: Particle[] = [];
@@ -73,7 +75,7 @@ export class ParticleSystem {
     if (this.selected !== null && !ids.has(this.selected)) this.selected = null;
     if (this.held !== null && !ids.has(this.held)) this.held = null;
   }
-  connect(a: number, b: number) {
+  connect(a: number, b: number, type: RelationshipType = "love") {
     if (
       a === b ||
       !this.get(a) ||
@@ -84,7 +86,7 @@ export class ParticleSystem {
       )
     )
       return false;
-    this.links.push({ a, b });
+    this.links.push({ a, b, type });
     return true;
   }
   removeLink(index: number) {

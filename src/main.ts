@@ -3,6 +3,10 @@ import { Loop } from "./engine/loop";
 import { ParticleSystem } from "./simulation/particles";
 import { Input, type Tool } from "./input";
 import { Renderer } from "./renderer";
+import {
+  RELATIONSHIPS,
+  type RelationshipType,
+} from "./simulation/relationships";
 const $ = <T extends HTMLElement = HTMLElement>(selector: string) =>
   document.querySelector<T>(selector)!;
 const canvas = $<HTMLCanvasElement>("#space"),
@@ -42,7 +46,19 @@ function sync() {
     document.body.classList.add("started");
     $("#welcome").setAttribute("aria-hidden", "true");
   }
-  $("#tool-help").textContent = help[input.tool];
+  $("#tool-help").textContent =
+    input.tool === "connect"
+      ? `Scegli due punti: legame di ${RELATIONSHIPS[input.relationship].description}.`
+      : help[input.tool];
+  document
+    .querySelectorAll<HTMLButtonElement>("[data-relationship]")
+    .forEach((button) => {
+      const type = button.dataset.relationship as RelationshipType;
+      button.style.setProperty("--bond-color", RELATIONSHIPS[type].color);
+      const active = type === input.relationship;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
   document
     .querySelectorAll<HTMLButtonElement>("[data-tool]")
     .forEach((button) => {
@@ -75,6 +91,14 @@ document
     (button) =>
       (button.onclick = () => input.setTool(button.dataset.tool as Tool)),
   );
+document.querySelectorAll<HTMLButtonElement>("[data-relationship]").forEach(
+  (button) =>
+    (button.onclick = () => {
+      input.relationship = button.dataset.relationship as RelationshipType;
+      if (input.tool !== "connect") input.setTool("connect");
+      sync();
+    }),
+);
 $("#clear").onclick = () => {
   system.clearLinks();
   sync();

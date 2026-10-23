@@ -9,7 +9,7 @@ test("two existing points create a persistent undirected line, without duplicate
   assert.equal(s.connect(a.id, a.id), false);
   assert.equal(s.connect(a.id, 9999), false);
   s.update(1 / 60);
-  assert.deepEqual(s.links, [{ a: a.id, b: b.id }]);
+  assert.deepEqual(s.links, [{ a: a.id, b: b.id, type: "love" }]);
 });
 test("random movement stays bounded and retains links for five simulated minutes", () => {
   const s = new ParticleSystem(640, 480, 80);
@@ -52,7 +52,7 @@ test("removing points prunes links and selection; resizing preserves IDs and top
   const x = s.particles[0].x;
   s.resize(400, 300);
   assert.equal(s.particles[0].x, x * 0.5);
-  assert.deepEqual(s.links, [{ a: 0, b: 1 }]);
+  assert.deepEqual(s.links, [{ a: 0, b: 1, type: "love" }]);
   s.reset(19);
   assert.equal(s.particles.length, 3);
   assert.equal(s.links.length, 0);
@@ -82,4 +82,24 @@ test("point counts are bounded and seeded simulations are repeatable", () => {
   assert.equal(a.add(10, 10), null);
   a.setCount(-30);
   assert.equal(a.particles.length, 0);
+});
+
+test("each relationship retains its own type across movement, resizing and later connections", () => {
+  const s = new ParticleSystem(800, 600, 4);
+  s.connect(0, 1, "love");
+  s.connect(1, 2, "friendship");
+  s.connect(2, 3, "family");
+  assert.equal(s.connect(1, 0, "family"), false);
+  s.update(1 / 60);
+  s.resize(400, 300);
+  s.move(1, 120, 150);
+  assert.deepEqual(
+    s.links.map((e) => e.type),
+    ["love", "friendship", "family"],
+  );
+  s.removeLink(1);
+  assert.deepEqual(
+    s.links.map((e) => e.type),
+    ["love", "family"],
+  );
 });

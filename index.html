@@ -95,61 +95,91 @@
         <span class="experiment-index">01 / CONNESSIONI</span>
         <p id="tool-help">Scegli due punti per collegarli.</p>
       </div>
-      <nav class="toolbar" aria-label="Strumenti">
-        <button
-          data-tool="connect"
-          aria-label="Collega due punti"
-          class="active"
-          aria-pressed="true"
-          title="Collega (1)"
+      <div class="tool-dock">
+        <div
+          class="relationship-picker"
+          role="group"
+          aria-label="Tipo di legame"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 18 18 6" />
-            <path d="M3 15h6v6H3zM15 3h6v6h-6z" /></svg
-          ><span>Collega</span><kbd>1</kbd></button
-        ><button
-          data-tool="move"
-          aria-label="Sposta un punto"
-          aria-pressed="false"
-          title="Sposta (2)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"
-            /></svg
-          ><span>Sposta</span><kbd>2</kbd></button
-        ><button
-          data-tool="add"
-          aria-label="Aggiungi un punto"
-          aria-pressed="false"
-          title="Aggiungi punti (3)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" /></svg
-          ><span>Aggiungi</span><kbd>3</kbd></button
-        ><button
-          data-tool="erase"
-          aria-label="Scollega una linea"
-          aria-pressed="false"
-          title="Scollega (4)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m4 5 15 15M5 19l5-5M14 10l5-5M3 17l4 4M17 3l4 4" /></svg
-          ><span>Scollega</span><kbd>4</kbd>
-        </button>
-        <div class="toolbar-divider"></div>
-        <button
-          id="pause"
-          class="pause"
-          aria-label="Metti in pausa"
-          aria-pressed="false"
-          title="Pausa (Spazio)"
-        >
-          <svg id="pause-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M8 5v14M16 5v14" />
-          </svg>
-        </button>
-      </nav>
+          <button
+            data-relationship="love"
+            class="active"
+            aria-pressed="true"
+            title="Nuovi legami di amore"
+          >
+            <i aria-hidden="true"></i>Amore
+          </button>
+          <button
+            data-relationship="friendship"
+            aria-pressed="false"
+            title="Nuovi legami di amicizia"
+          >
+            <i aria-hidden="true"></i>Amicizia
+          </button>
+          <button
+            data-relationship="family"
+            aria-pressed="false"
+            title="Nuovi legami di sangue, famiglia"
+          >
+            <i aria-hidden="true"></i>Sangue <small>/ famiglia</small>
+          </button>
+        </div>
+        <nav class="toolbar" aria-label="Strumenti">
+          <button
+            data-tool="connect"
+            aria-label="Collega due punti"
+            class="active"
+            aria-pressed="true"
+            title="Collega (1)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 18 18 6" />
+              <path d="M3 15h6v6H3zM15 3h6v6h-6z" /></svg
+            ><span>Collega</span><kbd>1</kbd></button
+          ><button
+            data-tool="move"
+            aria-label="Sposta un punto"
+            aria-pressed="false"
+            title="Sposta (2)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"
+              /></svg
+            ><span>Sposta</span><kbd>2</kbd></button
+          ><button
+            data-tool="add"
+            aria-label="Aggiungi un punto"
+            aria-pressed="false"
+            title="Aggiungi punti (3)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" /></svg
+            ><span>Aggiungi</span><kbd>3</kbd></button
+          ><button
+            data-tool="erase"
+            aria-label="Scollega una linea"
+            aria-pressed="false"
+            title="Scollega (4)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m4 5 15 15M5 19l5-5M14 10l5-5M3 17l4 4M17 3l4 4" /></svg
+            ><span>Scollega</span><kbd>4</kbd>
+          </button>
+          <div class="toolbar-divider"></div>
+          <button
+            id="pause"
+            class="pause"
+            aria-label="Metti in pausa"
+            aria-pressed="false"
+            title="Pausa (Spazio)"
+          >
+            <svg id="pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14M16 5v14" />
+            </svg>
+          </button>
+        </nav>
+      </div>
       <div class="bottom-note">
         <span class="small-square"></span> UN ESPERIMENTO APERTO
       </div>
