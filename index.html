@@ -4,65 +4,157 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#101711" />
+    <meta name="theme-color" content="#070707" />
     <meta
       name="description"
-      content="Milano, una notte impossibile. Una passeggiata in prima persona tra nebbia, cortei e presenze oltre le guglie."
+      content="Una sandbox di pixel in movimento. Collega due punti, costruisci una forma, lascia che cambi."
     />
-    <title>OLTRE LE GUGLIE — Milano, 31 ottobre</title>
+    <link rel="icon" href="/favicon.svg" />
+    <title>PUNTO — Una sandbox di possibilità</title>
   </head>
   <body>
     <canvas
-      id="world"
-      aria-label="Piazza del Duomo di notte, esplorabile in prima persona"
+      id="space"
+      aria-label="Sandbox di pixel bianchi in movimento. Seleziona due punti per collegarli con una linea."
     ></canvas>
-    <div class="film" aria-hidden="true"></div>
-    <div class="vignette" aria-hidden="true"></div>
     <header>
-      <span class="wordmark"
-        >OLTRE LE GUGLIE<span class="edition">
-          / UN NOTTURNO INTERATTIVO</span
-        ></span
-      ><button id="audio" aria-pressed="false">SUONO <span>OFF</span></button>
+      <div class="identity">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M3 3h5v5H3zM16 3h5v5h-5zM3 16h5v5H3zM16 16h5v5h-5z"
+            fill="currentColor"
+          /></svg
+        ><a href="/">PUNTO<span>PARTICLE PLAYGROUND</span></a>
+      </div>
+      <div class="top-right">
+        <span id="live" class="live"><i></i> IN MOVIMENTO</span
+        ><button
+          id="settings-toggle"
+          aria-label="Apri impostazioni"
+          aria-expanded="true"
+          aria-controls="settings"
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 5h14M3 15h14M7 2v6M13 12v6" />
+          </svg>
+        </button>
+      </div>
     </header>
-    <section id="intro" aria-label="Ingresso nell’esperienza">
-      <div class="kicker">
-        <span class="signal"></span> MILANO · XXXI OTTOBRE · 23:47
+    <aside id="settings">
+      <div class="panel-heading">IL TUO SPAZIO<span>↗</span></div>
+      <div class="stat">
+        <span>Punti</span><output id="point-count">180</output>
       </div>
-      <h1>La notte<br />non <em>finisce.</em></h1>
-      <p class="synopsis">
-        La piazza si muove. Qualcosa, oltre le guglie, respira.<br />Tu sei
-        soltanto di passaggio.
-      </p>
-      <button id="enter">ATTRAVERSA LA NEBBIA <span>↗</span></button>
-      <div class="controls">
-        <span><b>W A S D</b> cammina</span><span><b>MOUSE</b> guarda</span
-        ><span><b>ESC</b> fermati</span>
+      <input
+        id="density"
+        type="range"
+        min="30"
+        max="500"
+        step="10"
+        value="180"
+        aria-label="Numero di punti"
+      />
+      <div class="stat speed">
+        <label for="speed">Movimento</label
+        ><output id="speed-value">1.0×</output>
       </div>
-      <p class="touch-note">
-        Trascina a sinistra per camminare, a destra per guardarti attorno.
-      </p>
+      <input
+        id="speed"
+        type="range"
+        min="0.1"
+        max="2.5"
+        step="0.1"
+        value="1"
+        aria-label="Velocità del movimento"
+      />
+      <div class="panel-line"></div>
+      <div class="stat connections">
+        <span>Collegamenti</span><output id="edge-count">0</output>
+      </div>
+      <button id="clear" class="text-button">
+        Rimuovi tutti i collegamenti <span>↗</span></button
+      ><button id="reset" class="text-button reset">
+        Ricomincia da zero <span>↺</span>
+      </button>
+      <p class="panel-note">Nessuna regola. Parti da un punto.</p>
+    </aside>
+    <section id="welcome" aria-label="Primo esperimento">
+      <p class="eyebrow">ESPERIMENTO 001</p>
+      <h1>Tutto parte<br />da un <em>punto.</em></h1>
+      <p>Due punti diventano una linea.<br />Il resto, lo decidi tu.</p>
+      <span class="welcome-hint"
+        ><span class="mini-pixel"></span> Scegli il primo punto nello
+        spazio</span
+      >
     </section>
-    <div id="ingame" hidden>
-      <div id="hint">Cammina. Osserva. Nessuno ti sta cercando.</div>
-      <button id="pause" aria-label="Metti in pausa">Ⅱ</button>
-      <div id="touch-controls">
-        <div id="joystick"><div id="stick"></div></div>
-        <span class="look-hint">GUARDA ↔</span>
+    <div id="selection-hint" role="status" aria-live="polite"></div>
+    <div class="bottom">
+      <div class="experiment">
+        <span class="experiment-index">01 / CONNESSIONI</span>
+        <p id="tool-help">Scegli due punti per collegarli.</p>
+      </div>
+      <nav class="toolbar" aria-label="Strumenti">
+        <button
+          data-tool="connect"
+          aria-label="Collega due punti"
+          class="active"
+          aria-pressed="true"
+          title="Collega (1)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 18 18 6" />
+            <path d="M3 15h6v6H3zM15 3h6v6h-6z" /></svg
+          ><span>Collega</span><kbd>1</kbd></button
+        ><button
+          data-tool="move"
+          aria-label="Sposta un punto"
+          aria-pressed="false"
+          title="Sposta (2)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"
+            /></svg
+          ><span>Sposta</span><kbd>2</kbd></button
+        ><button
+          data-tool="add"
+          aria-label="Aggiungi un punto"
+          aria-pressed="false"
+          title="Aggiungi punti (3)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" /></svg
+          ><span>Aggiungi</span><kbd>3</kbd></button
+        ><button
+          data-tool="erase"
+          aria-label="Scollega una linea"
+          aria-pressed="false"
+          title="Scollega (4)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m4 5 15 15M5 19l5-5M14 10l5-5M3 17l4 4M17 3l4 4" /></svg
+          ><span>Scollega</span><kbd>4</kbd>
+        </button>
+        <div class="toolbar-divider"></div>
+        <button
+          id="pause"
+          class="pause"
+          aria-label="Metti in pausa"
+          aria-pressed="false"
+          title="Pausa (Spazio)"
+        >
+          <svg id="pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5v14M16 5v14" />
+          </svg>
+        </button>
+      </nav>
+      <div class="bottom-note">
+        <span class="small-square"></span> UN ESPERIMENTO APERTO
       </div>
     </div>
-    <footer>
-      <span>45°27′51″ N &nbsp; 9°11′25″ E</span
-      ><span id="caption">UNA VISIONE DI FINZIONE · NESSUN OBIETTIVO</span
-      ><span>RESTARE A GUARDARE <i>○</i></span>
-    </footer>
-    <div id="error" role="alert" hidden>
-      Questa esperienza richiede WebGL. Attiva l’accelerazione grafica nel
-      browser e ricarica la pagina.
-    </div>
+    <noscript>Attiva JavaScript per esplorare la sandbox.</noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
