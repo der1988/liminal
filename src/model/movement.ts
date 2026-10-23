@@ -2,6 +2,7 @@ import type { Random } from './random';
 import { CONFIG, ageOf, type Soul, type Relationship } from './types';
 import { Spatial } from './spatial';
 import { clamp } from '../simulation/math';
+import { attention } from "./affinity";
 export const movementSpeed=(s:Soul,year:number)=>{const age=ageOf(s,year);return (4+s.traits[5]*.065)*(.65+.35*clamp(age/24,0,1))*(1-.35*clamp((age-65)/35,0,1));};
 export interface MovementWorld {living:Soul[];souls:Map<string,Soul>;year:number;seconds:number;rng:Random;spatial:Spatial;relationsOf:(id:string)=>Relationship[]}
 export function movement(w:MovementWorld,dt:number){
@@ -11,7 +12,7 @@ export function movement(w:MovementWorld,dt:number){
   if(w.seconds>=s.nextDecision){
    s.nextDecision=w.seconds+w.rng.between(2,6);
    if(w.seconds>s.stateUntil){s.state='exploration';s.target=null;}
-   if(s.state==='exploration'&&near.length&&w.rng.next()<.12+s.traits[3]/180){const candidate=w.rng.pick(near);s.target=candidate.id;s.state='curiosity';s.stateUntil=w.seconds+w.rng.between(8,18);}
+   if(s.state==='exploration'&&near.length&&w.rng.next()<.12+s.traits[3]/180){const weights=near.map(p=>attention(s,p)),sum=weights.reduce((a,b)=>a+b,0);let roll=w.rng.next()*sum;const candidate=near.find((_,i)=>(roll-=weights[i])<=0)??near[0];s.target=candidate.id;s.state='curiosity';s.stateUntil=w.seconds+w.rng.between(8,18);}
    if(s.state==='exploration'){const links=w.relationsOf(s.id).filter(r=>r.end===null);if(links.length&&w.rng.next()<.18){const r=w.rng.pick(links);s.target=r.a===s.id?r.b:r.a;s.state='accompaniment';s.stateUntil=w.seconds+w.rng.between(9,20);}}
   }
   const phase=w.seconds*.13+s.phase;let angle=s.heading+Math.sin(phase)*.045+Math.sin(phase*.37)*.022;
