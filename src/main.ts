@@ -1,170 +1,19 @@
-import "./style.css";
-import { Loop } from "./engine/loop";
-import { ParticleSystem } from "./simulation/particles";
-import { Input, type Tool } from "./input";
-import { Renderer } from "./renderer";
-import {
-  RELATIONSHIPS,
-  type RelationshipType,
-} from "./simulation/relationships";
-const $ = <T extends HTMLElement = HTMLElement>(selector: string) =>
-  document.querySelector<T>(selector)!;
-const canvas = $<HTMLCanvasElement>("#space"),
-  system = new ParticleSystem(innerWidth, innerHeight),
-  renderer = new Renderer(canvas);
-const tools: Tool[] = ["connect", "move", "add", "erase"];
-const help: Record<Tool, string> = {
-  connect: "Scegli due punti per collegarli.",
-  move: "Trascina un punto. I suoi legami lo seguiranno.",
-  add: "Tocca lo spazio per aggiungere un punto.",
-  erase: "Tocca una linea per rimuovere il legame.",
-};
-let started = false;
-let input: Input;
-function sync() {
-  if (!input) return;
-  $("#point-count").textContent = String(system.particles.length).padStart(
-    3,
-    "0",
-  );
-  $("#edge-count").textContent = String(system.links.length).padStart(2, "0");
-  $<HTMLInputElement>("#density").value = String(system.particles.length);
-  $<HTMLButtonElement>("#clear").disabled = system.links.length === 0;
-  $("#selection-hint").textContent =
-    system.selected !== null
-      ? matchMedia("(pointer:coarse)").matches
-        ? "Scegli il secondo punto. Ritocca il primo per annullare."
-        : "Primo punto scelto. Scegli il secondo. · Esc per annullare"
-      : "";
-  if (
-    !started &&
-    (system.selected !== null ||
-      system.links.length > 0 ||
-      input.tool !== "connect")
-  ) {
-    started = true;
-    document.body.classList.add("started");
-    $("#welcome").setAttribute("aria-hidden", "true");
-  }
-  $("#tool-help").textContent =
-    input.tool === "connect"
-      ? `Scegli due punti: legame di ${RELATIONSHIPS[input.relationship].description}.`
-      : help[input.tool];
-  document
-    .querySelectorAll<HTMLButtonElement>("[data-relationship]")
-    .forEach((button) => {
-      const type = button.dataset.relationship as RelationshipType;
-      button.style.setProperty("--bond-color", RELATIONSHIPS[type].color);
-      const active = type === input.relationship;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-  document
-    .querySelectorAll<HTMLButtonElement>("[data-tool]")
-    .forEach((button) => {
-      const active = button.dataset.tool === input.tool;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-}
-input = new Input(canvas, system, sync);
-function pause() {
-  system.paused = !system.paused;
-  const button = $<HTMLButtonElement>("#pause");
-  button.setAttribute("aria-pressed", String(system.paused));
-  button.setAttribute(
-    "aria-label",
-    system.paused ? "Riprendi movimento" : "Metti in pausa",
-  );
-  $("#pause-icon").innerHTML = system.paused
-    ? '<path d="m8 5 11 7-11 7z"/>'
-    : '<path d="M8 5v14M16 5v14"/>';
-  $("#live").innerHTML = system.paused
-    ? "<i></i> IN PAUSA"
-    : "<i></i> IN MOVIMENTO";
-  $("#live").classList.toggle("paused", system.paused);
-}
-$("#pause").onclick = pause;
-document
-  .querySelectorAll<HTMLButtonElement>("[data-tool]")
-  .forEach(
-    (button) =>
-      (button.onclick = () => input.setTool(button.dataset.tool as Tool)),
-  );
-document.querySelectorAll<HTMLButtonElement>("[data-relationship]").forEach(
-  (button) =>
-    (button.onclick = () => {
-      input.relationship = button.dataset.relationship as RelationshipType;
-      if (input.tool !== "connect") input.setTool("connect");
-      sync();
-    }),
-);
-$("#clear").onclick = () => {
-  system.clearLinks();
-  sync();
-};
-$("#reset").onclick = () => {
-  input.cancel();
-  system.reset();
-  sync();
-};
-$<HTMLInputElement>("#density").oninput = (e) => {
-  system.setCount(Number((e.target as HTMLInputElement).value));
-  sync();
-};
-$<HTMLInputElement>("#speed").oninput = (e) => {
-  system.speed = Number((e.target as HTMLInputElement).value);
-  $("#speed-value").textContent = system.speed.toFixed(1) + "×";
-};
-function settings(open: boolean) {
-  $("#settings").hidden = !open;
-  $("#settings-toggle").setAttribute("aria-expanded", String(open));
-  $("#settings-toggle").setAttribute(
-    "aria-label",
-    open ? "Chiudi impostazioni" : "Apri impostazioni",
-  );
-}
-$("#settings-toggle").onclick = () => settings($("#settings").hidden);
-if (innerWidth < 700) settings(false);
-if (matchMedia("(prefers-reduced-motion: reduce)").matches) pause();
-const abort = new AbortController();
-window.addEventListener(
-  "keydown",
-  (e) => {
-    if (e.target instanceof HTMLInputElement) return;
-    if (e.code === "Space" && !(e.target instanceof HTMLButtonElement)) {
-      e.preventDefault();
-      pause();
-    }
-    if (e.key === "Escape") {
-      input.cancel();
-      sync();
-    }
-    if (["1", "2", "3", "4"].includes(e.key))
-      input.setTool(tools[Number(e.key) - 1]);
-  },
-  { signal: abort.signal },
-);
-window.addEventListener(
-  "resize",
-  () => {
-    system.resize(innerWidth, innerHeight);
-    renderer.resize();
-  },
-  { signal: abort.signal },
-);
-const loop = new Loop(
-  (dt) => system.update(dt),
-  (alpha) => {
-    input.refreshHover();
-    renderer.draw(system, input, system.paused ? 1 : alpha);
-  },
-);
-loop.start();
-sync();
-if (import.meta.hot)
-  import.meta.hot.dispose(() => {
-    loop.stop();
-    input.dispose();
-    abort.abort();
-  });
+import './style.css';
+import { Loop } from './engine/loop';
+import { World } from './model/world';
+import { Clock,type Speed } from './model/clock';
+import { ageOf,stageOf } from './model/types';
+import { Camera } from './view/camera';
+import { ObserverInput } from './view/input';
+import { Renderer } from './renderer';
+const $=<T extends HTMLElement=HTMLElement>(s:string)=>document.querySelector<T>(s)!;
+const world=new World(),clock=new Clock(world),camera=new Camera(innerWidth,innerHeight),renderer=new Renderer($<HTMLCanvasElement>('#space'));
+let selected:string|null=null;
+function select(id:string|null){selected=id;$('#person').hidden=!id;if(!id)camera.follow=null;refresh();}
+function refresh(){const s=selected?world.souls.get(selected):null;$('#year').textContent='anno '+Math.floor(world.year);if(s){$('#name').textContent=s.name;$('#age').textContent=Math.floor(ageOf(s,world.year))+' anni · '+stageOf(ageOf(s,world.year));$('#follow').textContent=camera.follow===s.id?'Smetti di seguire':'Segui';}}
+$('#close').onclick=()=>select(null);$('#follow').onclick=()=>{if(selected)camera.follow=camera.follow===selected?null:selected;refresh();};
+document.querySelectorAll<HTMLButtonElement>('[data-speed]').forEach(b=>b.onclick=()=>{clock.speed=Number(b.dataset.speed) as Speed;document.querySelectorAll('[data-speed]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));});
+const input=new ObserverInput($<HTMLCanvasElement>('#space'),world,camera,select);
+const abort=new AbortController();window.addEventListener('resize',()=>{camera.width=innerWidth;camera.height=innerHeight;renderer.resize();},{signal:abort.signal});
+let uiTime=0;const loop=new Loop(dt=>{clock.advance(dt);if(camera.follow){const s=world.souls.get(camera.follow);if(s)camera.target={x:s.x,y:s.y};}camera.update(dt);uiTime+=dt;if(uiTime>.25){refresh();uiTime=0;}},()=>renderer.draw(world,camera,selected,clock.alpha));loop.start();
+if(import.meta.hot)import.meta.hot.dispose(()=>{loop.stop();input.dispose();abort.abort();});
